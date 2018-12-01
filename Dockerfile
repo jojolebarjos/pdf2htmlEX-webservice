@@ -1,5 +1,5 @@
 
-FROM alpine:3.8
+FROM golang:alpine
 
 RUN \
     apk --update --no-cache add \
@@ -78,3 +78,11 @@ RUN \
         -DCMAKE_BUILD_TYPE=Release && \
     make && \
     make install
+
+COPY server.go .
+
+RUN go build server.go
+
+EXPOSE 8080/tcp
+
+ENTRYPOINT ["./server"]
