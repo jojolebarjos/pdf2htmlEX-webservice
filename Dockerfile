@@ -1,5 +1,5 @@
 
-FROM golang:alpine
+FROM golang:alpine as builder
 
 RUN \
     apk --update --no-cache add \
@@ -81,8 +81,33 @@ RUN \
 
 COPY server.go .
 
-RUN go build server.go
+RUN go build -ldflags="-w -s" server.go
+
+RUN \
+    mkdir /tmp/root && \
+    mkdir /tmp/root/bin && \
+    mkdir /tmp/root/lib && \
+    cp /usr/local/bin/pdf2htmlEX server /tmp/root/bin && \
+    { ldd /tmp/root/bin/pdf2htmlEX; ldd /tmp/root/bin/server; } | awk '{ if ($2 == "=>") print $3; else print $1; }' > deps.txt && \
+    cat deps.txt && \
+    xargs -I '{}' cp '{}' /tmp/root/lib < deps.txt
+
+RUN adduser -D -g '' user
+
+FROM alpine:3.8
+
+MAINTAINER Jojo le Barjos (jojolebarjos@gmail.com)
+
+RUN apk add --no-cache fontconfig
+
+COPY --from=builder /tmp/root /
+
+COPY --from=builder /usr/local/share/pdf2htmlEX /usr/local/share/pdf2htmlEX
+
+COPY --from=builder /etc/passwd /etc/passwd
+
+USER user
 
 EXPOSE 8080/tcp
 
-ENTRYPOINT ["./server"]
+ENTRYPOINT ["/bin/server"]
