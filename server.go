@@ -44,7 +44,7 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
     resultFile, _ := os.Open(resultPath)
     defer resultFile.Close()
     defer os.Remove(resultPath)
-    w.Header().Set("Content-Type", "text/html")
+    w.Header().Set("Content-Type", "application/xhtml+xml")
     io.Copy(w, resultFile)
     fmt.Printf("%s -> %s %s %s -> 200\n", r.RemoteAddr, r.Proto, r.Method, r.URL)
     
